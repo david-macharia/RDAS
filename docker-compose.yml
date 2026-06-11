@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Redis Cache Proxy Layer Service Component Engine
+  rdas-redis:
+    image: redis:7.2-alpine
+    container_name: rdas-redis-container
+    ports:
+      - "6379:6379"
+    volumes:
+      - rdas_redis_data:/data
+    command: redis-server --appendonly yes --replica-read-only no
+    networks:
+      - rdas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Reference Data Aggregation REST Service Component Application Engine
+  rdas-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rdas-app-container
+    ports:
+      - "8080:8080"
+    depends_on:
+      rdas-redis:
+        condition: service_healthy
+    environment:
+      - SPRING_DATA_REDIS_HOST=rdas-redis
+      - SPRING_DATA_REDIS_PORT=6379
+    networks:
+      - rdas-network
+
+volumes:
+  rdas_redis_data:
+    driver: local
+
+networks:
+  rdas-network:
+    driver: bridge

@@ -1,4 +1,5 @@
 # Reference Data Aggregation Service (RDAS)
+NOTE:FOR a cold start we are loading all data soo the first call lags ,If more time we could have impmented a cache mis to always call soap and cache 
 
 A high-performance Spring Boot microservice that transforms a slow, fragmented SOAP-based country information provider into a modern, searchable, paginated, and resilient REST API.
 

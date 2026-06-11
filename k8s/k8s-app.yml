@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdas-app-deployment
+  labels:
+    app: rdas-app
+spec:
+  replicas: 2 
+  selector:
+    matchLabels:
+      app: rdas-app
+  template:
+    metadata:
+      labels:
+        app: rdas-app
+    spec:
+      containers:
+      - name: rdas-app-container
+        # Points directly to your local image tag built on your Mac
+        image: rdas-app:latest
+        # Crucial for local deployment: forces k8s to pull strictly from local daemon cache
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+        env:
+        - name: SPRING_DATA_REDIS_HOST
+          value: "rdas-redis-service"
+        - name: SPRING_DATA_REDIS_PORT
+          value: "6379"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 45
+          periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rdas-app-service
+spec:
+  selector:
+    app: rdas-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer

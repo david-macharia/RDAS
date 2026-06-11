@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdas-redis-deployment
+  labels:
+    app: rdas-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rdas-redis
+  template:
+    metadata:
+      labels:
+        app: rdas-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+        command: ["redis-server", "--appendonly", "yes", "--replica-read-only", "no"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rdas-redis-service
+spec:
+  selector:
+    app: rdas-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
